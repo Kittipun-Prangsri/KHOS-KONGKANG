@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบัญชีรับ-จ่ายวัสดุคอมพิวเตอร์ — โรงพยาบาลคลองหาด</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #091a13;
+            --bg-card: #102d22;
+            --bg-card-hover: #163a2c;
+            --border-gold: #c5a045;
+            --text-gold: #e6c66d;
+            --gold-glow: rgba(212, 175, 55, 0.25);
+            --emerald: #10b981;
+            --emerald-bg: rgba(16, 185, 129, 0.15);
+            --rose: #f43f5e;
+            --rose-bg: rgba(244, 63, 94, 0.15);
+            --amber: #f59e0b;
+            --amber-bg: rgba(245, 158, 11, 0.15);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Prompt', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.05) 0%, transparent 40%);
+            padding-bottom: 50px;
+        }
+
+        /* Top Navigation Header */
+        header {
+            background: linear-gradient(180deg, #0d261d 0%, #091a13 100%);
+            border-bottom: 1px solid rgba(197, 160, 69, 0.3);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: radial-gradient(circle, var(--text-gold) 0%, var(--border-gold) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px var(--gold-glow);
+            font-size: 24px;
+            color: #091a13;
+            font-weight: bold;
+        }
+
+        .brand-text h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-gold);
+            letter-spacing: 0.5px;
+        }
+
+        .brand-text p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #d4af37 0%, #aa8528 100%);
+            color: #091a13;
+            font-weight: 600;
+            box-shadow: 0 4px 15px var(--gold-glow);
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--gold-glow);
+            filter: brightness(1.1);
+        }
+
+        .btn-emerald {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--emerald);
+            border-color: var(--emerald);
+        }
+
+        .btn-emerald:hover {
+            background: var(--emerald);
+            color: #091a13;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-gold);
+            border-color: rgba(197, 160, 69, 0.4);
+        }
+
+        .btn-outline:hover {
+            background: rgba(197, 160, 69, 0.1);
+            border-color: var(--text-gold);
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Tab Bar View Switcher */
+        .tab-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(197, 160, 69, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--text-gold);
+            border-color: var(--border-gold);
+            font-weight: 600;
+            box-shadow: 0 0 15px var(--gold-glow);
+        }
+
+        /* Top Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(197, 160, 69, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+        }
+
+        /* Health Ring Card */
+        .health-ring-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .ring-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 12px;
+        }
+
+        .ring-svg {
+            transform: rotate(-90deg);
+            width: 120px;
+            height: 120px;
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 10;
+        }
+
+        .ring-progress {
+            fill: none;
+            stroke: var(--emerald);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 314;
+            stroke-dashoffset: 60;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-gold);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-sub {
+            font-size: 0.8rem;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .text-emerald { color: var(--emerald); }
+        .text-rose { color: var(--rose); }
+        .text-amber { color: var(--amber); }
+
+        /* Main Table Card */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(197, 160, 69, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-title h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-gold);
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-input, .select-input {
+            background: rgba(9, 26, 19, 0.6);
+            border: 1px solid rgba(197, 160, 69, 0.3);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-input:focus, .select-input:focus {
+            border-color: var(--text-gold);
+            box-shadow: 0 0 10px var(--gold-glow);
+        }
+
+        /* Stock Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(9, 26, 19, 0.8);
+            color: var(--text-gold);
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 14px 16px;
+            border-bottom: 2px solid rgba(197, 160, 69, 0.3);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+        }
+
+        tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .badge-normal {
+            background: var(--emerald-bg);
+            color: var(--emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-low {
+            background: var(--rose-bg);
+            color: var(--rose);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        /* Modal Dialog */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border-gold);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 650px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--gold-glow);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(197, 160, 69, 0.2);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            color: var(--text-gold);
+            font-size: 1.2rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: var(--rose);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-gold);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(9, 26, 19, 0.8);
+            border: 1px solid rgba(197, 160, 69, 0.3);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--text-gold);
+            box-shadow: 0 0 10px var(--gold-glow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Drag and Drop Zone */
+        .drop-zone {
+            border: 2px dashed var(--border-gold);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(9, 26, 19, 0.4);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            background: rgba(212, 175, 55, 0.1);
+            border-color: var(--text-gold);
+        }
+
+        .drop-zone-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-text {
+            color: var(--text-gold);
+            font-weight: 500;
+        }
+
+        .drop-zone-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .preview-box {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid rgba(197, 160, 69, 0.2);
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .template-links {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .template-links a {
+            color: var(--emerald);
+            text-decoration: underline;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        /* Print Specific Elements - Hidden in normal screen */
+        .print-only-header, .print-signature-block {
+            display: none;
+        }
+
+        /* -----------------------------------------------------------------------------
+           Official Annual Report Grid Table (Exact Match with Excel Template)
+           ----------------------------------------------------------------------------- */
+        .excel-report-box {
+            background: #ffffff;
+            color: #000000;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        .excel-report-title {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 20px;
+        }
+
+        table.excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #000000;
+            font-size: 1rem;
+        }
+
+        table.excel-table th, table.excel-table td {
+            border: 1px solid #000000;
+            padding: 8px 14px;
+        }
+
+        table.excel-table th {
+            background: #ffffff;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        table.excel-table td.text-left { text-align: left; }
+        table.excel-table td.text-right { text-align: right; }
+        table.excel-table td.text-center { text-align: center; }
+
+        .excel-signature {
+            margin-top: 40px;
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 40px;
+        }
+
+        .excel-signature-inner {
+            text-align: center;
+            line-height: 2;
+            color: #000000;
+            font-size: 1rem;
+        }
+
+        /* -----------------------------------------------------------------------------
+           Professional Print Stylesheet (@media print)
+           Matches official hospital inventory spreadsheet layout from Excel
+           ----------------------------------------------------------------------------- */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 15mm 15mm 15mm 15mm;
+            }
+
+            /* Hide all non-printable dashboard controls & stat cards */
+            header, .header-actions, .tab-bar, .stats-grid, .table-controls, .btn, .modal-overlay, p.table-subtitle, .badge, .badge-normal, .badge-low {
+                display: none !important;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-family: 'Prompt', 'TH Sarabun PSK', sans-serif !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt;
+            }
+
+            .container {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .table-card, .excel-report-box {
+                background: #ffffff !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+
+            /* Print Header Section */
+            .print-only-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            .print-only-header h2 {
+                font-size: 16pt;
+                font-weight: bold;
+                color: #000;
+                margin-bottom: 4px;
+            }
+
+            /* Formal Print Table */
+            table, table.excel-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 11pt !important;
+                page-break-inside: auto;
+                color: #000000 !important;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            th, table.excel-table th {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-weight: bold !important;
+                border: 1px solid #000000 !important;
+                padding: 6px 10px !important;
+                text-align: center !important;
+            }
+
+            td, table.excel-table td {
+                border: 1px solid #000000 !important;
+                padding: 6px 10px !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+            }
+
+            /* Formal Signature Block at Bottom */
+            .excel-signature {
+                display: flex !important;
+                justify-content: flex-end !important;
+                margin-top: 50px !important;
+                padding-right: 50px !important;
+                page-break-inside: avoid;
+            }
+
+            .excel-signature-inner {
+                text-align: center !important;
+                line-height: 2.2 !important;
+                font-size: 11pt !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🏛️</div>
+            <div class="brand-text">
+                <h1>คลังวัสดุคอมพิวเตอร์ (Vault LEDGER)</h1>
+                <p>โรงพยาบาลคลองหาด — หน่วยเทคโนโลยีสารสนเทศ</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline" onclick="fetchStockData()">🔄 ดึงข้อมูลล่าสุด</button>
+            <button class="btn btn-outline" onclick="openImportModal()">📁 นำเข้าไฟล์ Excel / CSV</button>
+            <button class="btn btn-emerald" onclick="openMovementModal('receive')">📥 บันทึกรับเข้าวัสดุ</button>
+            <button class="btn btn-gold" onclick="openMovementModal('issue')">📤 บันทึกเบิกจ่ายวัสดุ</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Tab Bar View Switcher -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tabCurrentStock" onclick="switchView('current')">📊 สต๊อกคงเหลือปัจจุบัน (Current Ledger)</button>
+            <button class="tab-btn" id="tabMonthlyReport" onclick="switchView('monthly')">📅 บัญชีรับ-จ่ายแยกรายเดือน (Monthly Ledger)</button>
+            <button class="tab-btn" id="tabAnnualReport" onclick="switchView('annual')">📑 รายงานสรุปมูลค่าคงคลังรายปี 2569 (Annual Report)</button>
+        </div>
+
+        <!-- Top Stats Grid -->
+        <div class="stats-grid">
+            
+            <!-- Stock Health Ring Card -->
+            <div class="stat-card health-ring-card">
+                <div class="ring-container">
+                    <svg class="ring-svg">
+                        <circle class="ring-bg" cx="60" cy="60" r="50"></circle>
+                        <circle class="ring-progress" id="healthRing" cx="60" cy="60" r="50"></circle>
+                    </svg>
+                    <div class="ring-text" id="healthPercent">90%</div>
+                </div>
+                <div class="stat-label">ดัชนีสุขภาพสต๊อก (Stock Health)</div>
+            </div>
+
+            <!-- Total Valuation -->
+            <div class="stat-card">
+                <div class="stat-label">มูลค่าวัสดุคงเหลือรวมทั้งคลัง (ล่าสุด)</div>
+                <div class="stat-value" id="totalValuation">฿0.00</div>
+                <div class="stat-sub text-emerald">
+                    <span>▲ +2.4%</span> จากเดือนก่อนหน้า
+                </div>
+            </div>
+
+            <!-- Total Movements Received -->
+            <div class="stat-card">
+                <div class="stat-label">รับเข้าในเดือนล่าสุด (มิ.ย. 2569)</div>
+                <div class="stat-value" id="monthlyReceived">11 รายการ</div>
+                <div class="stat-sub text-emerald">
+                    <span>📥 ยอดรวม ฿7,170.00</span>
+                </div>
+            </div>
+
+            <!-- Low Stock Warning -->
+            <div class="stat-card">
+                <div class="stat-label">รายการถึงจุดสั่งซื้อซ้ำ (Reorder Point)</div>
+                <div class="stat-value text-amber" id="lowStockCount">0 รายการ</div>
+                <div class="stat-sub text-rose" id="lowStockSub">
+                    <span>⚠️ ต้องการการจัดซื้อเติมสต๊อก</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- View 1: Current Stock Table Card -->
+        <div class="table-card" id="currentStockView">
+            <div class="table-header">
+                <div class="table-title">
+                    <h2>บัญชีคุมสต๊อกวัสดุคอมพิวเตอร์ (51 รายการล่าสุด)</h2>
+                </div>
+                <div class="table-controls">
+                    <input type="text" id="searchInput" class="search-input" placeholder="🔍 ค้นหารหัส หรือชื่อวัสดุ..." onkeyup="filterItems()">
+                    <select id="categoryFilter" class="select-input" onchange="filterItems()">
+                        <option value="all">ทุกหมวดหมู่</option>
+                        <option value="วัสดุคอมพิวเตอร์">วัสดุคอมพิวเตอร์</option>
+                        <option value="วัสดุเครือข่าย">วัสดุเครือข่าย</option>
+                        <option value="วัสดุสำนักงาน">วัสดุสำนักงาน</option>
+                    </select>
+                    <select id="statusFilter" class="select-input" onchange="filterItems()">
+                        <option value="all">ทุกสถานะ</option>
+                        <option value="low">เฉพาะรายการใกล้หมด</option>
+                        <option value="normal">ปกติ</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>รหัส</th>
+                            <th>รายการวัสดุคอมพิวเตอร์</th>
+                            <th>หมวดหมู่</th>
+                            <th>ราคา/หน่วย</th>
+                            <th>คงเหลือ</th>
+                            <th>หน่วย</th>
+                            <th>มูลค่าคงเหลือ</th>
+                            <th>จุดสั่งซื้อ</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <!-- Table rows generated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View 2: Monthly Report & Comparison View -->
+        <div class="table-card" id="monthlyReportView" style="display: none;">
+            <div class="table-header">
+                <div class="table-title">
+                    <h2>รายงานบัญชีสรุปรับ-จ่าย และเปรียบเทียบคงเหลือรายเดือน (ปีงบประมาณ 2569)</h2>
+                    <p class="table-subtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">ถอดรูปแบบตรงตามไฟล์ Excel เดิม 12 เดือน (ต.ค. 68 - ก.ย. 69) คำนวณยอดยกมาจากเดือนก่อนให้อัตโนมัติ</p>
+                </div>
+                <div class="table-controls">
+                    <select id="fiscalMonthSelect" class="select-input" onchange="loadMonthlyReportData()" style="font-weight: 600; color: var(--text-gold);">
+                        <option value="1">ตุลาคม 2568 (เดือนที่ 1)</option>
+                        <option value="2">พฤศจิกายน 2568 (เดือนที่ 2)</option>
+                        <option value="3">ธันวาคม 2568 (เดือนที่ 3)</option>
+                        <option value="4">มกราคม 2569 (เดือนที่ 4)</option>
+                        <option value="5">กุมภาพันธ์ 2569 (เดือนที่ 5)</option>
+                        <option value="6">มีนาคม 2569 (เดือนที่ 6)</option>
+                        <option value="7">เมษายน 2569 (เดือนที่ 7)</option>
+                        <option value="8">พฤษภาคม 2569 (เดือนที่ 8)</option>
+                        <option value="9" selected>มิถุนายน 2569 (เดือนที่ 9 - ล่าสุด)</option>
+                        <option value="10">กรกฎาคม 2569 (เดือนที่ 10)</option>
+                        <option value="11">สิงหาคม 2569 (เดือนที่ 11)</option>
+                        <option value="12">กันยายน 2569 (เดือนที่ 12)</option>
+                    </select>
+                    <button class="btn btn-gold" onclick="window.print()">🖨️ พิมพ์บัญชีรายเดือน</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="monthlySummaryTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">รหัส</th>
+                            <th rowspan="2">รายการวัสดุคอมพิวเตอร์</th>
+                            <th colspan="2" style="text-align: center; background: rgba(212, 175, 55, 0.1);">ยอดยกมา (Opening)</th>
+                            <th colspan="2" style="text-align: center; background: rgba(16, 185, 129, 0.1);">รับเข้าในเดือน (Received)</th>
+                            <th colspan="2" style="text-align: center; background: rgba(244, 63, 94, 0.1);">จ่ายออกในเดือน (Issued)</th>
+                            <th colspan="2" style="text-align: center; background: rgba(212, 175, 55, 0.15);">สินค้าคงเหลือ (Closing)</th>
+                            <th rowspan="2">เปรียบเทียบเดือนก่อน (%)</th>
+                        </tr>
+                        <tr>
+                            <th style="background: rgba(212, 175, 55, 0.05);">จำนวน</th>
+                            <th style="background: rgba(212, 175, 55, 0.05);">มูลค่า (บาท)</th>
+                            <th style="background: rgba(16, 185, 129, 0.05);">จำนวน</th>
+                            <th style="background: rgba(16, 185, 129, 0.05);">มูลค่า (บาท)</th>
+                            <th style="background: rgba(244, 63, 94, 0.05);">จำนวน</th>
+                            <th style="background: rgba(244, 63, 94, 0.05);">มูลค่า (บาท)</th>
+                            <th style="background: rgba(212, 175, 55, 0.1);">จำนวน</th>
+                            <th style="background: rgba(212, 175, 55, 0.1);">มูลค่า (บาท)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyTableBody">
+                        <!-- Monthly Ledger Rows -->
+                    </tbody>
+                    <tfoot id="monthlyTableFoot">
+                        <!-- Summary Footer Totals -->
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- View 3: Annual Summary Valuation Report (Exact Match with User Excel Image) -->
+        <div class="table-card" id="annualReportView" style="display: none; background: transparent; border: none; box-shadow: none; padding: 0;">
+            
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;" class="table-controls">
+                <button class="btn btn-gold" onclick="window.print()">🖨️ พิมพ์รายงานมูลค่าคงคลังประจำปี (A4)</button>
+            </div>
+
+            <div class="excel-report-box">
+                <div class="excel-report-title">
+                    รายงานมูลค่าวัสดุคอมพิวเตอร์คงคลังปี 2569
+                </div>
+
+                <table class="excel-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 22%;">เดือน</th>
+                            <th style="width: 20%;">ยอดยกมาปี 68</th>
+                            <th style="width: 18%;">มูลค่ารับเข้า</th>
+                            <th style="width: 18%;">มูลค่าใช้ไป</th>
+                            <th style="width: 22%;">คงเหลือ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="annualReportBody">
+                        <!-- Dynamic Month Rows -->
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight: bold;">
+                            <td class="text-center">รวม</td>
+                            <td class="text-right"></td>
+                            <td class="text-right"></td>
+                            <td class="text-right" id="annualTotalIssued">112,819.00</td>
+                            <td class="text-right" id="annualFinalClosing">98,797.15</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="excel-signature">
+                    <div class="excel-signature-inner">
+                        <p>ผู้รายงาน................................................................</p>
+                        <p><strong>( นายกิตติพันธ์  ปรางศรี )</strong></p>
+                        <p>ตำแหน่ง นักวิชาการคอมพิวเตอร์</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Single Movement Entry Modal -->
+    <div class="modal-overlay" id="movementModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">บันทึกรายการวัสดุ</h3>
+                <button class="modal-close" onclick="closeMovementModal()">&times;</button>
+            </div>
+            <form id="movementForm" onsubmit="handleMovementSubmit(event)">
+                <input type="hidden" id="movementType" value="receive">
+                
+                <div class="form-group">
+                    <label for="itemSelect">รายการวัสดุ</label>
+                    <select id="itemSelect" class="form-control" required onchange="updateUnitPriceHint()">
+                        <!-- Dynamic Options -->
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="movementQty">จำนวนที่รับ/เบิก</label>
+                        <input type="number" id="movementQty" class="form-control" min="1" required placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="unitPrice">ราคาต่อหน่วย (บาท)</label>
+                        <input type="number" step="0.01" id="unitPrice" class="form-control" required placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="movementDate">วันที่ทำรายการ</label>
+                        <input type="date" id="movementDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="referenceNo">เลขที่เอกสาร / ใบเบิก</label>
+                        <input type="text" id="referenceNo" class="form-control" placeholder="เช่น บช.69-001">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="movementNote">หมายเหตุ / แผนกที่เบิก</label>
+                    <input type="text" id="movementNote" class="form-control" placeholder="เช่น เบิกให้แผนกผู้ป่วยนอก (OPD)">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-outline" onclick="closeMovementModal()">ยกเลิก</button>
+                    <button type="submit" class="btn btn-gold" id="btnSubmitForm">บันทึกรายการ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Excel / CSV Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📁 นำเข้าข้อมูลด้วยไฟล์ Excel / CSV</h3>
+                <button class="modal-close" onclick="closeImportModal()">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="importType">ประเภทข้อมูลในไฟล์</label>
+                <select id="importType" class="form-control">
+                    <option value="items">รายการวัสดุ Master (item_code, name, unit, unit_price, reorder_point)</option>
+                    <option value="movements">รายการเคลื่อนไหว รับ-เบิก (item_code, movement_type, quantity, unit_price, movement_date, reference_no, note)</option>
+                </select>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <div class="drop-zone-icon">📊</div>
+                <div class="drop-zone-text" id="dropZoneText">ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์</div>
+                <div class="drop-zone-sub">รองรับนามสกุล .xlsx, .xls, .csv</div>
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" style="display: none" onchange="handleFileSelect(event)">
+            </div>
+
+            <div class="template-links">
+                💡 ดาวน์โหลดแม่แบบไฟล์ตัวอย่าง:
+                <a href="sample_items.csv" download="sample_items.csv">sample_items.csv</a> | 
+                <a href="sample_movements.csv" download="sample_movements.csv">sample_movements.csv</a>
+            </div>
+
+            <!-- Data Preview Box -->
+            <div class="preview-box" id="previewContainer" style="display: none;">
+                <table style="font-size: 0.8rem;">
+                    <thead id="previewHead"></thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <span id="importSummaryText" style="font-size: 0.85rem; color: var(--text-gold);"></span>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-outline" onclick="closeImportModal()">ยกเลิก</button>
+                    <button type="button" class="btn btn-gold" id="btnConfirmImport" disabled onclick="executeBatchImport()">ยืนยันนำเข้าข้อมูล</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Credentials
+        const SUPABASE_URL = 'https://hxejooyqjjrdycxzgdkp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZWpvb3lxampyZHljeHpnZGtwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzU3NjczOSwiZXhwIjoyMDk5MTUyNzM5fQ.pgMSF9y2-t5n6lH7hql8B7QzSj76Eqv3qEqMJZSS42k';
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+        let currentActiveView = 'current';
+
+        // Mock Data Fallback
+        const mockItems = [
+            { id: 1, item_code: '291', item_name: 'หมึก Laser canon 325', category_name: 'วัสดุคอมพิวเตอร์', unit: 'ตลับ', unit_price: 450.00, current_qty: 60, current_value: 27000.00, reorder_point: 10, is_low_stock: 0 },
+            { id: 2, item_code: '741', item_name: 'หมึก Laser HP 12A', category_name: 'วัสดุคอมพิวเตอร์', unit: 'กล่อง', unit_price: 450.00, current_qty: 1, current_value: 450.00, reorder_point: 2, is_low_stock: 1 },
+            { id: 3, item_code: '742', item_name: 'หมึก Laser canon 303', category_name: 'วัสดุคอมพิวเตอร์', unit: 'กล่อง', unit_price: 900.00, current_qty: 6, current_value: 5400.00, reorder_point: 3, is_low_stock: 0 }
+        ];
+
+        let itemsData = [...mockItems];
+        let monthlySummaryData = [];
+        let parsedImportRows = [];
+
+        function switchView(view) {
+            currentActiveView = view;
+            document.getElementById('currentStockView').style.display = view === 'current' ? 'block' : 'none';
+            document.getElementById('monthlyReportView').style.display = view === 'monthly' ? 'block' : 'none';
+            document.getElementById('annualReportView').style.display = view === 'annual' ? 'block' : 'none';
+
+            document.getElementById('tabCurrentStock').classList.toggle('active', view === 'current');
+            document.getElementById('tabMonthlyReport').classList.toggle('active', view === 'monthly');
+            document.getElementById('tabAnnualReport').classList.toggle('active', view === 'annual');
+
+            if (view === 'monthly') {
+                loadMonthlyReportData();
+            } else if (view === 'annual') {
+                loadAnnualReportData();
+            }
+        }
+
+        async function fetchStockData() {
+            let loaded = false;
+            
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient.from('v_current_stock').select('*').order('item_code');
+                    if (!error && data && data.length > 0) {
+                        itemsData = data;
+                        loaded = true;
+                    }
+                } catch (e) {
+                    console.log('Supabase fetch failed:', e);
+                }
+            }
+
+            if (!loaded) {
+                try {
+                    const res = await fetch('/api/stock/current');
+                    const result = await res.json();
+                    if (result.success && result.data.length > 0) {
+                        itemsData = result.data;
+                        loaded = true;
+                    }
+                } catch (err) {
+                    console.log('Express API not active, using local mockup data');
+                }
+            }
+
+            // ดึงข้อมูล Valuation พิเศษสำหรับคลัง (จาก sup_rep_tmp_04)
+            try {
+                const valRes = await fetch('/api/external/valuation/2');
+                const valResult = await valRes.json();
+                if (valResult.success && valResult.data) {
+                    const valMap = new Map(valResult.data.map(d => [String(d.SUP_ID), Number(d.MONEY_TOTAL)]));
+                    itemsData.forEach(item => {
+                        const extVal = valMap.get(String(item.item_code));
+                        if (extVal !== undefined) {
+                            item.current_value = extVal;
+                        }
+                    });
+                }
+            } catch (err) {
+                console.log('Failed to fetch external valuation for items:', err);
+            }
+
+            renderTable(itemsData);
+            updateSummaryCards();
+            populateItemDropdown();
+            if (currentActiveView === 'monthly') {
+                loadMonthlyReportData();
+            } else if (currentActiveView === 'annual') {
+                loadAnnualReportData();
+            }
+        }
+
+        async function loadMonthlyReportData() {
+            const selectEl = document.getElementById('fiscalMonthSelect');
+            const fMonthId = Number(selectEl.value);
+            let loaded = false;
+
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('monthly_stock_summary')
+                        .select('*, items(item_code, name, unit)')
+                        .eq('fiscal_month_id', fMonthId);
+
+                    if (!error && data && data.length > 0) {
+                        monthlySummaryData = data.map(m => ({
+                            item_id: m.item_id,
+                            item_code: m.items?.item_code,
+                            item_name: m.items?.name,
+                            unit: m.items?.unit,
+                            opening_qty: m.opening_qty,
+                            opening_value: m.opening_value,
+                            received_qty: m.received_qty,
+                            received_value: m.received_value,
+                            issued_qty: m.issued_qty,
+                            issued_value: m.issued_value,
+                            closing_qty: m.closing_qty,
+                            closing_value: m.closing_value,
+                            is_signed: m.is_signed
+                        }));
+                        loaded = true;
+                    }
+                } catch (e) {
+                    console.log('Supabase monthly report fetch failed');
+                }
+            }
+
+            if (!loaded) {
+                try {
+                    const res = await fetch(`/api/summary/${fMonthId}`);
+                    const result = await res.json();
+                    if (result.success) {
+                        monthlySummaryData = result.data;
+                        loaded = true;
+                    }
+                } catch (err) {
+                    console.log('Local Express monthly summary failed');
+                }
+            }
+
+            // ดึงข้อมูล Valuation พิเศษสำหรับคลัง (จาก sup_rep_tmp_04)
+            try {
+                const valRes = await fetch('/api/external/valuation/2');
+                const valResult = await valRes.json();
+                if (valResult.success && valResult.data) {
+                    const valMap = new Map(valResult.data.map(d => [String(d.SUP_ID), Number(d.MONEY_TOTAL)]));
+                    monthlySummaryData.forEach(item => {
+                        const extVal = valMap.get(String(item.item_code));
+                        if (extVal !== undefined) {
+                            item.closing_value = extVal;
+                        }
+                    });
+                }
+            } catch (err) {
+                console.log('Failed to fetch external valuation for monthly summary:', err);
+            }
+
+            renderMonthlyReportTable(monthlySummaryData);
+        }
+
+        async function loadAnnualReportData() {
+            const tbody = document.getElementById('annualReportBody');
+            tbody.innerHTML = '';
+
+            const monthNames = ['', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน'];
+            let totalIssuedAll = 0;
+            let lastClosingVal = 0;
+
+            for (let m = 1; m <= 12; m++) {
+                let openVal = 0, recVal = 0, issVal = 0, closeVal = 0;
+                let hasData = false;
+
+                if (supabaseClient) {
+                    try {
+                        const { data } = await supabaseClient
+                            .from('monthly_stock_summary')
+                            .select('opening_value, received_value, issued_value, closing_value')
+                            .eq('fiscal_month_id', m);
+
+                        if (data && data.length > 0) {
+                            hasData = true;
+                            data.forEach(r => {
+                                openVal += Number(r.opening_value || 0);
+                                recVal += Number(r.received_value || 0);
+                                issVal += Number(r.issued_value || 0);
+                                closeVal += Number(r.closing_value || 0);
+                            });
+                        }
+                    } catch (e) {}
+                }
+
+                if (hasData) {
+                    totalIssuedAll += issVal;
+                    if (closeVal > 0) lastClosingVal = closeVal;
+
+                    const tr = document.createElement('tr');
+                    // Check if month is future/empty (e.g. July, Aug, Sep with 0 movements)
+                    const isFuture = (m >= 10 && recVal === 0 && issVal === 0);
+
+                    tr.innerHTML = `
+                        <td class="text-left">${monthNames[m]}</td>
+                        <td class="text-right">${isFuture ? '' : openVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        <td class="text-right">${isFuture ? '' : recVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        <td class="text-right">${isFuture ? '' : issVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        <td class="text-right">${isFuture ? '-' : closeVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            }
+
+            document.getElementById('annualTotalIssued').innerText = totalIssuedAll.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('annualFinalClosing').innerText = lastClosingVal.toLocaleString('th-TH', {minimumFractionDigits: 2});
+        }
+
+        function renderMonthlyReportTable(data) {
+            const tbody = document.getElementById('monthlyTableBody');
+            const tfoot = document.getElementById('monthlyTableFoot');
+            tbody.innerHTML = '';
+            tfoot.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-muted); padding: 30px;">ยังไม่มีบันทึกข้อมูลสรุปของเดือนที่เลือก</td></tr>`;
+                return;
+            }
+
+            let sumOpenVal = 0, sumRecVal = 0, sumIssVal = 0, sumCloseVal = 0;
+
+            data.forEach(item => {
+                sumOpenVal += Number(item.opening_value || 0);
+                sumRecVal += Number(item.received_value || 0);
+                sumIssVal += Number(item.issued_value || 0);
+                sumCloseVal += Number(item.closing_value || 0);
+
+                const prevVal = Number(item.opening_value || 0);
+                const currVal = Number(item.closing_value || 0);
+                let diffRatio = 0;
+                if (prevVal > 0) {
+                    diffRatio = ((currVal - prevVal) / prevVal) * 100;
+                }
+
+                const diffHtml = diffRatio > 0 ? 
+                    `<span class="text-emerald">▲ +${diffRatio.toFixed(1)}%</span>` : 
+                    (diffRatio < 0 ? `<span class="text-rose">▼ ${diffRatio.toFixed(1)}%</span>` : `<span style="color: var(--text-muted)">0.0%</span>`);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: var(--text-gold); text-align: center;">${item.item_code}</td>
+                    <td><strong>${item.item_name}</strong></td>
+                    <td style="text-align: right;">${item.opening_qty}</td>
+                    <td style="text-align: right;">฿${Number(item.opening_value).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: var(--emerald); font-weight: 600;">${item.received_qty}</td>
+                    <td style="text-align: right; color: var(--emerald);">฿${Number(item.received_value).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right; color: var(--rose); font-weight: 600;">${item.issued_qty}</td>
+                    <td style="text-align: right; color: var(--rose);">฿${Number(item.issued_value).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: right; font-weight: 700;">${item.closing_qty}</td>
+                    <td style="text-align: right; font-weight: 700; color: var(--text-gold);">฿${Number(item.closing_value).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: center;">${diffHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            tfoot.innerHTML = `
+                <tr style="background: rgba(9, 26, 19, 0.9); font-weight: 700; color: var(--text-gold);">
+                    <td colspan="2" style="text-align: center;">ยอดรวมรวมทั้งสิ้น (Grand Total)</td>
+                    <td>-</td>
+                    <td style="text-align: right;">฿${sumOpenVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td>-</td>
+                    <td style="text-align: right; color: var(--emerald);">฿${sumRecVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td>-</td>
+                    <td style="text-align: right; color: var(--rose);">฿${sumIssVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td>-</td>
+                    <td style="text-align: right; font-size: 1.05rem;">฿${sumCloseVal.toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td>-</td>
+                </tr>
+            `;
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('stockTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">ไม่พบรายการวัสดุตรงกับเงื่อนไขการค้นหา</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600; color: var(--text-gold); text-align: center;">${item.item_code}</td>
+                    <td><strong>${item.item_name}</strong></td>
+                    <td><span style="color: var(--text-muted); font-size: 0.85rem;">${item.category_name || 'วัสดุคอมพิวเตอร์'}</span></td>
+                    <td style="text-align: right;">฿${Number(item.unit_price).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td style="font-weight: 700; font-size: 1rem; text-align: right; color: ${item.is_low_stock ? 'var(--rose)' : 'var(--text-main)'}">${item.current_qty}</td>
+                    <td style="text-align: center;">${item.unit}</td>
+                    <td style="font-weight: 600; text-align: right;">฿${Number(item.current_value).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: center;">${item.reorder_point}</td>
+                    <td style="text-align: center;">
+                        <span class="badge ${item.is_low_stock ? 'badge-low' : 'badge-normal'}">
+                            ${item.is_low_stock ? '⚠️ ใกล้หมด' : '✓ ปกติ'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateSummaryCards() {
+            const totalVal = itemsData.reduce((sum, item) => sum + Number(item.current_value), 0);
+            const lowStockItems = itemsData.filter(item => Number(item.is_low_stock) === 1);
+            const healthRatio = ((itemsData.length - lowStockItems.length) / itemsData.length) * 100;
+
+            document.getElementById('totalValuation').innerText = '฿' + totalVal.toLocaleString('th-TH', {minimumFractionDigits: 2});
+            document.getElementById('lowStockCount').innerText = `${lowStockItems.length} รายการ`;
+            
+            const ring = document.getElementById('healthRing');
+            const percentText = document.getElementById('healthPercent');
+            const offset = 314 - (314 * healthRatio) / 100;
+            ring.style.strokeDashoffset = offset;
+            percentText.innerText = `${Math.round(healthRatio)}%`;
+
+            if (healthRatio < 70) {
+                ring.style.stroke = 'var(--rose)';
+            } else if (healthRatio < 90) {
+                ring.style.stroke = 'var(--amber)';
+            } else {
+                ring.style.stroke = 'var(--emerald)';
+            }
+        }
+
+        function filterItems() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const cat = document.getElementById('categoryFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            const filtered = itemsData.filter(item => {
+                const matchSearch = item.item_code.toLowerCase().includes(search) || item.item_name.toLowerCase().includes(search);
+                const matchCat = (cat === 'all') || (item.category_name === cat);
+                const matchStatus = (status === 'all') || 
+                                    (status === 'low' && Number(item.is_low_stock) === 1) ||
+                                    (status === 'normal' && Number(item.is_low_stock) === 0);
+                return matchSearch && matchCat && matchStatus;
+            });
+
+            renderTable(filtered);
+        }
+
+        function populateItemDropdown() {
+            const select = document.getElementById('itemSelect');
+            select.innerHTML = '<option value="">-- เลือกรายการวัสดุ --</option>';
+            itemsData.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id || item.item_id;
+                opt.innerText = `[${item.item_code}] ${item.item_name} (คงเหลือ: ${item.current_qty} ${item.unit})`;
+                opt.dataset.price = item.unit_price;
+                select.appendChild(opt);
+            });
+        }
+
+        function updateUnitPriceHint() {
+            const select = document.getElementById('itemSelect');
+            const selectedOpt = select.options[select.selectedIndex];
+            if (selectedOpt && selectedOpt.dataset.price) {
+                document.getElementById('unitPrice').value = selectedOpt.dataset.price;
+            }
+        }
+
+        function openMovementModal(type) {
+            document.getElementById('movementType').value = type;
+            const title = type === 'receive' ? '📥 บันทึกรับเข้าวัสดุคอมพิวเตอร์' : '📤 บันทึกเบิกจ่ายวัสดุคอมพิวเตอร์';
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('btnSubmitForm').innerText = type === 'receive' ? 'บันทึกรับเข้า' : 'บันทึกเบิกจ่าย';
+            document.getElementById('movementDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('movementModal').classList.add('active');
+        }
+
+        function closeMovementModal() {
+            document.getElementById('movementModal').classList.remove('active');
+            document.getElementById('movementForm').reset();
+        }
+
+        async function handleMovementSubmit(e) {
+            e.preventDefault();
+            const itemId = Number(document.getElementById('itemSelect').value);
+            const type = document.getElementById('movementType').value;
+            const qty = Number(document.getElementById('movementQty').value);
+            const price = Number(document.getElementById('unitPrice').value);
+            const date = document.getElementById('movementDate').value;
+            const ref = document.getElementById('referenceNo').value;
+            const note = document.getElementById('movementNote').value;
+            const selectedMonthId = Number(document.getElementById('fiscalMonthSelect').value) || 9;
+
+            const targetItem = itemsData.find(i => (i.id || i.item_id) === itemId);
+
+            if (type === 'issue' && targetItem && targetItem.current_qty < qty) {
+                alert(`⚠️ ไม่สามารถเบิกได้! ยอดคงเหลือคงมีเพียง ${targetItem.current_qty} ${targetItem.unit}`);
+                return;
+            }
+
+            let submitted = false;
+
+            if (supabaseClient) {
+                try {
+                    const { error } = await supabaseClient.from('stock_movements').insert([{
+                        item_id: itemId,
+                        fiscal_month_id: selectedMonthId,
+                        movement_type: type,
+                        quantity: qty,
+                        unit_price: price,
+                        movement_date: date,
+                        reference_no: ref || null,
+                        note: note || null
+                    }]);
+
+                    if (!error) {
+                        alert('✅ บันทึกรายการเคลื่อนไหวไปยัง Supabase เรียบร้อยแล้ว (Trigger คำนวณยกยอดย้ายให้อัตโนมัติ)');
+                        await fetchStockData();
+                        submitted = true;
+                    }
+                } catch (e) {
+                    console.log('Supabase submit failed:', e);
+                }
+            }
+
+            if (!submitted) {
+                try {
+                    const res = await fetch('/api/movements', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            item_id: itemId,
+                            fiscal_month_id: selectedMonthId,
+                            movement_type: type,
+                            quantity: qty,
+                            unit_price: price,
+                            movement_date: date,
+                            reference_no: ref,
+                            note: note
+                        })
+                    });
+
+                    const json = await res.json();
+                    if (json.success) {
+                        alert('✅ บันทึกรายการเคลื่อนไหวผ่าน Express API เรียบร้อยแล้ว');
+                        await fetchStockData();
+                        submitted = true;
+                    }
+                } catch (err) {
+                    console.log('Express API submit failed');
+                }
+            }
+
+            if (!submitted && targetItem) {
+                if (type === 'receive') {
+                    targetItem.current_qty += qty;
+                } else {
+                    targetItem.current_qty -= qty;
+                }
+                targetItem.current_value = targetItem.current_qty * targetItem.unit_price;
+                targetItem.is_low_stock = targetItem.current_qty <= targetItem.reorder_point ? 1 : 0;
+                
+                renderTable(itemsData);
+                updateSummaryCards();
+                alert(`✅ บันทึกรายการ (${type === 'receive' ? 'รับเข้า' : 'เบิกจ่าย'}) จำลองเรียบร้อยแล้ว`);
+            }
+
+            closeMovementModal();
+        }
+
+        // -----------------------------------------------------------------------------
+        // Excel & CSV File Import Logic
+        // -----------------------------------------------------------------------------
+
+        function openImportModal() {
+            document.getElementById('importModal').classList.add('active');
+            resetImportForm();
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('active');
+            resetImportForm();
+        }
+
+        function resetImportForm() {
+            parsedImportRows = [];
+            document.getElementById('fileInput').value = '';
+            document.getElementById('dropZoneText').innerText = 'ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์';
+            document.getElementById('previewContainer').style.display = 'none';
+            document.getElementById('btnConfirmImport').disabled = true;
+            document.getElementById('importSummaryText').innerText = '';
+        }
+
+        const dropZone = document.getElementById('dropZone');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }, false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }, false);
+        });
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) processFile(files[0]);
+        });
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) processFile(files[0]);
+        }
+
+        function processFile(file) {
+            document.getElementById('dropZoneText').innerText = `📄 เลือกไฟล์: ${file.name}`;
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                parsedImportRows = XLSX.utils.sheet_to_json(worksheet);
+
+                if (parsedImportRows.length === 0) {
+                    alert('⚠️ ไฟล์นี้ไม่มีข้อมูลตาราง');
+                    resetImportForm();
+                    return;
+                }
+
+                renderImportPreview(parsedImportRows);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderImportPreview(rows) {
+            const head = document.getElementById('previewHead');
+            const body = document.getElementById('previewBody');
+            head.innerHTML = '';
+            body.innerHTML = '';
+
+            if (rows.length === 0) return;
+
+            const headers = Object.keys(rows[0]);
+            let trHead = '<tr>';
+            headers.forEach(h => { trHead += `<th>${h}</th>`; });
+            trHead += '</tr>';
+            head.innerHTML = trHead;
+
+            rows.slice(0, 10).forEach(row => {
+                let trBody = '<tr>';
+                headers.forEach(h => { trBody += `<td>${row[h] !== undefined ? row[h] : ''}</td>`; });
+                trBody += '</tr>';
+                body.innerHTML += trBody;
+            });
+
+            document.getElementById('previewContainer').style.display = 'block';
+            document.getElementById('btnConfirmImport').disabled = false;
+            document.getElementById('importSummaryText').innerText = `พร้อมนำเข้าทั้งหมด ${rows.length} รายการ (แสดงตัวอย่าง 10 รายการแรก)`;
+        }
+
+        async function executeBatchImport() {
+            if (parsedImportRows.length === 0) return;
+
+            const importType = document.getElementById('importType').value;
+            const selectedMonthId = Number(document.getElementById('fiscalMonthSelect').value) || 9;
+            let success = false;
+
+            document.getElementById('btnConfirmImport').innerText = '⏳ กำลังนำเข้า...';
+            document.getElementById('btnConfirmImport').disabled = true;
+
+            try {
+                const endpoint = importType === 'items' ? '/api/import/items' : '/api/import/movements';
+                const bodyPayload = importType === 'items' ? { items: parsedImportRows } : { movements: parsedImportRows };
+
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyPayload)
+                });
+
+                const json = await res.json();
+                if (json.success) {
+                    alert('✅ ' + json.message);
+                    success = true;
+                }
+            } catch (err) {
+                console.log('Express import API failed, trying Supabase fallback');
+            }
+
+            if (!success && supabaseClient) {
+                try {
+                    if (importType === 'items') {
+                        const itemsToInsert = parsedImportRows.map(r => ({
+                            item_code: String(r.item_code || r.รหัส || '').trim(),
+                            name: String(r.name || r.ชื่อวัสดุ || '').trim(),
+                            unit: String(r.unit || r.หน่วย || 'ชิ้น').trim(),
+                            unit_price: parseFloat(r.unit_price || r.ราคา) || 0.00,
+                            reorder_point: parseInt(r.reorder_point || r.จุดสั่งซื้อ) || 10,
+                            category_id: 1
+                        })).filter(i => i.item_code && i.name);
+
+                        const { error } = await supabaseClient.from('items').upsert(itemsToInsert, { onConflict: 'item_code' });
+                        if (!error) {
+                            alert(`✅ นำเข้าวัสดุ Master ไปยัง Supabase สำเร็จ ${itemsToInsert.length} รายการ`);
+                            success = true;
+                        }
+                    } else {
+                        const { data: currentItems } = await supabaseClient.from('items').select('id, item_code');
+                        const codeMap = new Map((currentItems || []).map(i => [i.item_code, i.id]));
+
+                        const movsToInsert = parsedImportRows.map(r => ({
+                            item_id: codeMap.get(String(r.item_code || '').trim()),
+                            fiscal_month_id: selectedMonthId,
+                            movement_type: String(r.movement_type || 'receive').toLowerCase().trim(),
+                            quantity: parseInt(r.quantity) || 0,
+                            unit_price: parseFloat(r.unit_price) || 0.00,
+                            movement_date: r.movement_date || new Date().toISOString().split('T')[0],
+                            reference_no: r.reference_no || null,
+                            note: r.note || null
+                        })).filter(m => m.item_id && m.quantity > 0);
+
+                        const { error } = await supabaseClient.from('stock_movements').insert(movsToInsert);
+                        if (!error) {
+                            alert(`✅ นำเข้าบันทึกรับ-เบิก ไปยัง Supabase สำเร็จ ${movsToInsert.length} รายการ`);
+                            success = true;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Supabase import failed:', e);
+                }
+            }
+
+            if (success) {
+                await fetchStockData();
+                closeImportModal();
+            } else {
+                alert('⚠️ ไม่สามารถนำเข้าข้อมูลได้ ตรวจสอบรูปแบบคอลัมน์ในไฟล์ให้ตรงกับคำแนะนำ');
+            }
+
+            document.getElementById('btnConfirmImport').innerText = 'ยืนยันนำเข้าข้อมูล';
+            document.getElementById('btnConfirmImport').disabled = false;
+        }
+
+        // Initialize Page
+        window.addEventListener('DOMContentLoaded', fetchStockData);
+    </script>
+</body>
+</html>
