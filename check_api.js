@@ -2,9 +2,9 @@ async function main() {
   console.log('Testing local server endpoints...');
   
   const endpoints = [
-    'http://localhost:4000/api/items',
-    'http://localhost:4000/api/stock/current',
-    'http://localhost:4000/api/external/valuation/2'
+    'http://localhost:5189/api/items',
+    'http://localhost:5189/api/stock/current',
+    'http://localhost:5189/api/external/valuation/2'
   ];
 
   for (const url of endpoints) {

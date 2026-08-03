@@ -14,11 +14,11 @@ COPY . .
 RUN mkdir -p logs
 
 # Expose server port
-EXPOSE 4000
+EXPOSE 5189
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=4000
+ENV PORT=5189
 
 # Start command
 CMD ["npm", "start"]

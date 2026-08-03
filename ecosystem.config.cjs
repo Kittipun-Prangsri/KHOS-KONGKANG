@@ -10,7 +10,7 @@ module.exports = {
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'development',
-        PORT: 4000,
+        PORT: 5189,
         DB_HOST: 'localhost',
         DB_USER: 'root',
         DB_PASSWORD: '',
@@ -19,7 +19,7 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 4000,
+        PORT: 5189,
         DB_HOST: 'localhost',
         DB_USER: 'stock_app',
         DB_PASSWORD: 'secure_password_here',

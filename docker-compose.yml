@@ -29,10 +29,10 @@ services:
     container_name: computer_stock_app
     restart: always
     ports:
-      - "4000:4000"
+      - "5189:5189"
     environment:
       NODE_ENV: production
-      PORT: 4000
+      PORT: 5189
       DB_HOST: db
       DB_USER: stock_app
       DB_PASSWORD: stockpassword
