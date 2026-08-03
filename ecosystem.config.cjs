@@ -1,3 +1,6 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 module.exports = {
   apps: [
     {
@@ -9,22 +12,19 @@ module.exports = {
       watch: false,
       max_memory_restart: '500M',
       env: {
-        NODE_ENV: 'development',
-        PORT: 5189,
-        DB_HOST: 'localhost',
-        DB_USER: 'root',
-        DB_PASSWORD: '',
-        DB_NAME: 'computer_stock',
-        DB_PORT: 3306
+        NODE_ENV: process.env.NODE_ENV || 'development',
+        PORT: process.env.PORT || 5189,
+        DB_HOST: process.env.DB_HOST || 'localhost',
+        DB_USER: process.env.DB_USER || 'root',
+        DB_PASSWORD: process.env.DB_PASSWORD || '',
+        DB_NAME: process.env.DB_NAME || 'computer_stock',
+        DB_PORT: process.env.DB_PORT || 3306,
+        SUPABASE_URL: process.env.SUPABASE_URL || '',
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 5189,
-        DB_HOST: 'localhost',
-        DB_USER: 'stock_app',
-        DB_PASSWORD: 'secure_password_here',
-        DB_NAME: 'computer_stock',
-        DB_PORT: 3306
+        PORT: process.env.PORT || 5189
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       error_file: './logs/pm2-error.log',
