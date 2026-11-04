@@ -8,8 +8,11 @@ import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
 import { body, param, validationResult } from 'express-validator';
+import { runSync, getStatus, startScheduler } from './hosoffice-sync.js';
+import { guardAppDbOrExit } from './db-guard.js';
 
 dotenv.config();
+guardAppDbOrExit();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -411,8 +414,31 @@ app.post('/api/import/excel-csv', upload.single('file'), async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------
+// Sync จาก Hosoffice
+// -----------------------------------------------------------------------------
+// POST /api/sync/hosoffice?dry=1  -> ทดลองคำนวณ ไม่เขียนข้อมูล
+app.post('/api/sync/hosoffice', async (req, res) => {
+  try {
+    const result = await runSync(pool, { dryRun: req.query.dry === '1', triggerBy: 'manual' });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Hosoffice sync failed:', error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.get('/api/sync/status', async (req, res) => {
+  try {
+    res.json({ success: true, data: await getStatus(pool) });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Start Server
 const HOST = process.env.HOST || '0.0.0.0';
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on ${HOST}:${PORT} (Basic Auth enabled)`);
+  startScheduler(pool);
 });

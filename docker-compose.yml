@@ -15,8 +15,8 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./stock_computer_schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
-      - ./stock_triggers_procedures.sql:/docker-entrypoint-initdb.d/2_triggers.sql
+      - ./db/stock_computer_schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
+      - ./db/stock_triggers_procedures.sql:/docker-entrypoint-initdb.d/2_triggers.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s

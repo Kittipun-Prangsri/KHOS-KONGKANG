@@ -38,9 +38,9 @@
 2. โครงสร้างไฟล์ในโปรเจกต์นี้
    ไฟล์
    หน้าที่
-   stock_computer_schema.sql
+   db/stock_computer_schema.sql
    DDL หลัก — สร้างตาราง items, item_categories, fiscal_years, fiscal_months, stock_movements, monthly_stock_summary และ view v_current_stock, v_annual_summary (รองรับทั้ง MySQL และ PostgreSQL/Supabase มีคอมเมนต์กำกับส่วนที่ต่างกัน)
-   stock_triggers_procedures.sql
+   db/stock_triggers_procedures.sql
    Trigger + Stored Procedure สำหรับคำนวณ monthly_stock_summary อัตโนมัติเมื่อมีการ insert/update/delete บน stock_movements มี 2 เวอร์ชัน: MySQL (procedure + trigger) และ PostgreSQL/Supabase (PL/pgSQL function + trigger)
    backend-api/server.js
    Backend API ด้วย Node.js + Express + mysql2 — endpoint สำหรับบันทึกรายการ, ดึงสต๊อกปัจจุบัน, สรุปรายเดือน/รายปี, ลงนามอนุมัติ
@@ -72,17 +72,17 @@ v_annual_summary — ยอดรวมทั้งปีงบต่อรา�
 
 # MySQL
 
-mysql -u root -p your_db_name < stock_computer_schema.sql
+mysql -u root -p your_db_name < db/stock_computer_schema.sql
 
-mysql -u root -p your_db_name < stock_triggers_procedures.sql # ใช้เฉพาะส่วนที่ 1 (MySQL)
+mysql -u root -p your_db_name < db/stock_triggers_procedures.sql
 
 # PostgreSQL / Supabase
 
-psql -h db.xxxx.supabase.co -U postgres -d postgres -f stock_computer_schema.sql
+psql -h db.xxxx.supabase.co -U postgres -d postgres -f db/stock_computer_schema.sql
 
-psql -h db.xxxx.supabase.co -U postgres -d postgres -f stock_triggers_procedures.sql # ใช้เฉพาะส่วนที่ 2 (Postgres)
+psql -h db.xxxx.supabase.co -U postgres -d postgres -f db/stock_triggers_procedures_pg.sql
 
-หมายเหตุ: ไฟล์ stock_triggers_procedures.sql มีทั้งสองเวอร์ชันในไฟล์เดียวกัน (คั่นด้วยคอมเมนต์ ส่วนที่ 1 / ส่วนที่ 2) — รันเฉพาะส่วนที่ตรงกับฐานข้อมูลที่ใช้จริง อย่ารันทั้งไฟล์รวดเดียว
+หมายเหตุ: stock_triggers_procedures.sql สำหรับ MySQL ส่วน PostgreSQL/Supabase ใช้ stock_triggers_procedures_pg.sql — รันได้ทั้งไฟล์ ไม่ต้องตัดส่วน
 
 4. Trigger / Cascade Recalculation — ทำงานอย่างไร
    ปัญหาของสต๊อกแบบยกยอด (running balance) คือ ถ้าแก้ไขรายการย้อนหลัง (เช่นแก้จำนวนที่รับเข้าเดือน ธ.ค. 68) ยอดคงเหลือของทุกเดือนถัดไป (ม.ค., ก.พ., ... จนถึงเดือนปัจจุบัน) ต้องคำนวณใหม่ตามไปด้วย

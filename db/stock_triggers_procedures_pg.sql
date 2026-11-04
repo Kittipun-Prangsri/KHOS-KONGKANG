@@ -43,9 +43,10 @@ BEGIN
         JOIN fiscal_years prev_fy ON prev_fm.fiscal_year_id = prev_fy.id
         JOIN fiscal_years curr_fy ON curr_fm.fiscal_year_id = curr_fy.id
         JOIN monthly_stock_summary mss ON mss.item_id = p_item_id AND mss.fiscal_month_id = prev_fm.id
+        -- เดือนล่าสุดที่มีแถวสรุปก่อนเดือนนี้ (ไม่ใช่แค่ "เดือนก่อนหน้าพอดี" เพราะเดือนที่ไม่มีความเคลื่อนไหวไม่มีแถว)
         WHERE (
-            (prev_fy.start_date = curr_fy.start_date AND prev_fm.month_no = curr_fm.month_no - 1) OR
-            (prev_fy.start_date < curr_fy.start_date AND prev_fm.month_no = 12 AND curr_fm.month_no = 1)
+            prev_fy.start_date < curr_fy.start_date OR
+            (prev_fy.start_date = curr_fy.start_date AND prev_fm.month_no < curr_fm.month_no)
         )
         ORDER BY prev_fy.start_date DESC, prev_fm.month_no DESC
         LIMIT 1;

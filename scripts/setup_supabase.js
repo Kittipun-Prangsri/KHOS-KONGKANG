@@ -21,9 +21,9 @@ if (!dbPassword) {
   console.log('------------------------------------------------------------------');
   console.log('เนื่องจากไม่ได้ระบุ SUPABASE_DB_PASSWORD ในไฟล์ .env คุณสามารถคัดลอก SQL ไปรันบนเว็บได้ตามขั้นตอนดังนี้:\n');
   console.log('1. เปิด Supabase SQL Editor: https://supabase.com/dashboard/project/hxejooyqjjrdycxzgdkp/sql/new');
-  console.log('2. คัดลอกและรันไฟล์: stock_computer_schema_pg.sql');
-  console.log('3. คัดลอกและรันส่วนที่ 2 ในไฟล์: stock_triggers_procedures.sql');
-  console.log('4. คัดลอกและรันไฟล์: seed_data.sql');
+  console.log('2. คัดลอกและรันไฟล์: db/stock_computer_schema_pg.sql');
+  console.log('3. คัดลอกและรันไฟล์: db/stock_triggers_procedures_pg.sql');
+  console.log('4. คัดลอกและรันไฟล์: db/seed_data.sql');
   console.log('------------------------------------------------------------------\n');
   process.exit(0);
 }
@@ -43,13 +43,11 @@ async function runSetup() {
     await client.connect();
     console.log('✅ เชื่อมต่อฐานข้อมูล Supabase สำเร็จ!');
 
-    const schemaSql = fs.readFileSync(path.join(__dirname, '../stock_computer_schema_pg.sql'), 'utf8');
-    const triggersSql = fs.readFileSync(path.join(__dirname, '../stock_triggers_procedures.sql'), 'utf8');
-    const seedSql = fs.readFileSync(path.join(__dirname, '../seed_data.sql'), 'utf8');
+    const schemaSql = fs.readFileSync(path.join(__dirname, '../db/stock_computer_schema_pg.sql'), 'utf8');
+    const triggersSql = fs.readFileSync(path.join(__dirname, '../db/stock_triggers_procedures_pg.sql'), 'utf8');
+    const seedSql = fs.readFileSync(path.join(__dirname, '../db/seed_data.sql'), 'utf8');
 
-    // Extract PostgreSQL Trigger section
-    const pgTriggerIndex = triggersSql.indexOf('-- ส่วนที่ 2: สำหรับ PostgreSQL');
-    const pgTriggerSql = pgTriggerIndex !== -1 ? triggersSql.substring(pgTriggerIndex) : triggersSql;
+    const pgTriggerSql = triggersSql;
 
     console.log('⏳ กำลังสร้าง DDL Schema...');
     await client.query(schemaSql);

@@ -167,8 +167,8 @@ async function migrateExcel() {
     console.log(`🎉 Migrate บันทึกเคลื่อนไหวสำเร็จทั้งหมด ${movementsToInsert.length} รายการไปยัง Supabase! (Status: ${resMovs.status})`);
   }
 
-  fs.writeFileSync(path.join(__dirname, '../seed_real_data.sql'), sqlContent);
-  console.log('📄 บันทึกไฟล์ seed_real_data.sql เรียบร้อย');
+  fs.writeFileSync(path.join(__dirname, '../db/seed_real_data.sql'), sqlContent);
+  console.log('📄 บันทึกไฟล์ db/seed_real_data.sql เรียบร้อย');
 }
 
 migrateExcel();
