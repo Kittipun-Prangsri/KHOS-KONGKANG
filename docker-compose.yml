@@ -7,16 +7,19 @@ services:
     container_name: computer_stock_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?ต้องตั้ง MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: computer_stock
       MYSQL_USER: stock_app
-      MYSQL_PASSWORD: stockpassword
+      MYSQL_PASSWORD: ${DB_PASSWORD:?ต้องตั้ง DB_PASSWORD}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"   # เปิดเฉพาะในเครื่อง ถ้าแอปอยู่เครื่องอื่นให้ใช้ IP ของ LAN เครื่องนี้แทน และกันด้วย firewall
     volumes:
       - mysql_data:/var/lib/mysql
       - ./db/stock_computer_schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
       - ./db/stock_triggers_procedures.sql:/docker-entrypoint-initdb.d/2_triggers.sql
+      - ./db/seed_base.sql:/docker-entrypoint-initdb.d/3_seed_base.sql
+      - ./db/001_hosoffice_sync.sql:/docker-entrypoint-initdb.d/4_sync.sql
+    command: --log-bin-trust-function-creators=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -35,11 +38,20 @@ services:
       PORT: 5189
       DB_HOST: db
       DB_USER: stock_app
-      DB_PASSWORD: stockpassword
+      DB_PASSWORD: ${DB_PASSWORD:?ต้องตั้ง DB_PASSWORD}
       DB_NAME: computer_stock
       DB_PORT: 3306
       AUTH_USER: ${AUTH_USER:?ต้องตั้ง AUTH_USER}
       AUTH_PASSWORD: ${AUTH_PASSWORD:?ต้องตั้ง AUTH_PASSWORD}
+      # Hosoffice (อ่านอย่างเดียว) — สิทธิ์ตาม db/provision_app_db.sql
+      HOSOFFICE_DB_HOST: ${HOSOFFICE_DB_HOST:-}
+      HOSOFFICE_DB_PORT: ${HOSOFFICE_DB_PORT:-3306}
+      HOSOFFICE_DB_USER: ${HOSOFFICE_DB_USER:-}
+      HOSOFFICE_DB_PASSWORD: ${HOSOFFICE_DB_PASSWORD:-}
+      HOSOFFICE_DB_NAME: ${HOSOFFICE_DB_NAME:-hosoffice}
+      HOSOFFICE_INVEN_ID: ${HOSOFFICE_INVEN_ID:-2}
+      SYNC_FROM_DATE: ${SYNC_FROM_DATE:-2025-10-01}
+      SYNC_INTERVAL_MIN: ${SYNC_INTERVAL_MIN:-}
     depends_on:
       db:
         condition: service_healthy

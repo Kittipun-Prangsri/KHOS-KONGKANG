@@ -1,31 +1,22 @@
-// ด่านป้องกัน: ฐานของแอป (DB_*) ต้องไม่ใช่ฐาน/เซิร์ฟเวอร์ Hosoffice ตัวจริง
-// เพื่อไม่ให้ schema, trigger, sync หรือสคริปต์ใด ๆ เขียนข้อมูลลงเซิร์ฟเวอร์หลักโดยไม่ตั้งใจ
-// ยกเว้นเฉพาะกรณีตั้ง ALLOW_APP_DB_ON_HOSOFFICE_SERVER=1 โดยตั้งใจ (ไม่แนะนำ)
+// ด่านป้องกัน: แอปต้องเขียนลงฐานของตัวเอง (เช่น computer_stock) เท่านั้น ห้ามเขียนลงฐาน Hosoffice
+// อนุญาตให้ฐานของแอปอยู่บนเซิร์ฟเวอร์เดียวกับ Hosoffice ได้ (สร้างเป็นฐานเพิ่ม)
+// ด่านที่เชื่อถือได้จริงคือสิทธิ์ของผู้ใช้ในฐานข้อมูล (ดู db/provision_app_db.sql) — ไฟล์นี้กันพลาดตอนตั้งค่า .env
 
 const norm = (v) => String(v ?? '').trim().toLowerCase();
 
 export function guardAppDb(env = process.env) {
   const problems = [];
   const appName = norm(env.DB_NAME);
-  const hosName = norm(env.HOSOFFICE_DB_NAME || 'hosoffice');
+  const protectedNames = new Set(['hosoffice', norm(env.HOSOFFICE_DB_NAME)].filter(Boolean));
 
   if (!appName) problems.push('ยังไม่ได้ตั้ง DB_NAME');
-  if (appName === 'hosoffice' || appName === hosName) {
-    problems.push(`DB_NAME="${env.DB_NAME}" เป็นชื่อฐาน Hosoffice — ห้ามใช้เป็นฐานของแอป`);
-  }
-
-  if (env.HOSOFFICE_DB_HOST) {
-    const sameServer = norm(env.DB_HOST || 'localhost') === norm(env.HOSOFFICE_DB_HOST) &&
-      String(env.DB_PORT || 3306) === String(env.HOSOFFICE_DB_PORT || 3306);
-    if (sameServer && env.ALLOW_APP_DB_ON_HOSOFFICE_SERVER !== '1') {
-      problems.push(`DB_HOST (${env.DB_HOST}) เป็นเซิร์ฟเวอร์เดียวกับ HOSOFFICE_DB_HOST — ให้ใช้ฐานบนเครื่อง/เซิร์ฟเวอร์ทดสอบแยกต่างหาก`);
-    }
+  if (protectedNames.has(appName)) {
+    problems.push(`DB_NAME="${env.DB_NAME}" เป็นฐาน Hosoffice — ห้ามใช้เป็นฐานของแอป (ให้ใช้ฐานใหม่ เช่น computer_stock)`);
   }
 
   if (problems.length) {
-    const msg = '❌ หยุดเพื่อป้องกันการเขียนข้อมูลลงเซิร์ฟเวอร์หลัก:\n  - ' + problems.join('\n  - ') +
-      '\n  แก้ DB_* ใน .env ให้ชี้ฐานของแอป (เช่น computer_stock) แล้วรันใหม่';
-    const err = new Error(msg);
+    const err = new Error('❌ หยุดเพื่อป้องกันการเขียนข้อมูลลงฐาน Hosoffice:\n  - ' + problems.join('\n  - ') +
+      '\n  แก้ DB_NAME ใน .env ให้ชี้ฐานของแอป แล้วรันใหม่');
     err.code = 'APP_DB_GUARD';
     throw err;
   }
