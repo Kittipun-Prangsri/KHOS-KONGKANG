@@ -38,6 +38,8 @@ services:
       DB_PASSWORD: stockpassword
       DB_NAME: computer_stock
       DB_PORT: 3306
+      AUTH_USER: ${AUTH_USER:?ต้องตั้ง AUTH_USER}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:?ต้องตั้ง AUTH_PASSWORD}
     depends_on:
       db:
         condition: service_healthy

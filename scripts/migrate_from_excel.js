@@ -9,8 +9,12 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://hxejooyqjjrdycxzgdkp.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZWpvb3lxampyZHljeHpnZGtwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzU3NjczOSwiZXhwIjoyMDk5MTUyNzM5fQ.pgMSF9y2-t5n6lH7hql8B7QzSj76Eqv3qEqMJZSS42k';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ ต้องตั้ง SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY ใน .env (ห้ามฝังในโค้ด)');
+  process.exit(1);
+}
 
 async function migrateExcel() {
   const filePath = path.join(__dirname, '../downloaded_stock_file2.xlsx');

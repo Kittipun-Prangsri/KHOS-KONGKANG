@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import path from 'path';
+import crypto from 'crypto';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { fileURLToPath } from 'url';
@@ -16,23 +17,57 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5189;
 
-app.use(cors());
+// -----------------------------------------------------------------------------
+// Security: Basic Auth + CORS allow-list + static whitelist
+// -----------------------------------------------------------------------------
+const AUTH_USER = process.env.AUTH_USER;
+const AUTH_PASSWORD = process.env.AUTH_PASSWORD;
+if (!AUTH_USER || !AUTH_PASSWORD) {
+  console.error('❌ ต้องตั้ง AUTH_USER และ AUTH_PASSWORD ใน .env ก่อนเริ่มเซิร์ฟเวอร์ (ระบบไม่เปิดโดยไม่มีรหัสผ่าน)');
+  process.exit(1);
+}
+
+const safeEqual = (a, b) => {
+  const ha = crypto.createHash('sha256').update(String(a)).digest();
+  const hb = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+};
+
+const basicAuth = (req, res, next) => {
+  const header = req.headers.authorization || '';
+  const [scheme, encoded] = header.split(' ');
+  if (scheme === 'Basic' && encoded) {
+    const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+    const idx = decoded.indexOf(':');
+    const user = decoded.slice(0, idx);
+    const pass = decoded.slice(idx + 1);
+    // ตรวจทั้งสองค่าเสมอ เพื่อไม่ให้เวลาตอบสนองเผยว่าผิดที่ช่องไหน
+    const okUser = safeEqual(user, AUTH_USER);
+    const okPass = safeEqual(pass, AUTH_PASSWORD);
+    if (idx >= 0 && okUser && okPass) return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="KONGKANG Stock", charset="UTF-8"');
+  res.status(401).json({ success: false, message: 'ต้องเข้าสู่ระบบ' });
+};
+
+// CORS: ปิดโดยค่าเริ่มต้น (dashboard เรียก API origin เดียวกัน) เปิดเฉพาะ origin ที่ระบุใน CORS_ORIGINS
+const corsOrigins = (process.env.CORS_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+if (corsOrigins.length > 0) {
+  app.use(cors({ origin: corsOrigins, credentials: true }));
+}
+
+app.use(basicAuth);
 app.use(express.json({ limit: '10mb' }));
 
 // Multer in-memory storage for file uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Serve static files (including stock-dashboard.html)
-app.use(express.static(path.join(__dirname, '..')));
-
-// Serve Dashboard on Root URL
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../stock-dashboard.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '../stock-dashboard.html'));
-});
+// เสิร์ฟเฉพาะไฟล์ที่จำเป็น (ห้าม express.static ทั้งโฟลเดอร์โปรเจกต์ เพราะจะเปิดเผย .sql/.xlsx/scripts)
+const publicFile = (name) => (req, res) => res.sendFile(path.join(__dirname, '..', name));
+app.get('/', publicFile('stock-dashboard.html'));
+app.get('/dashboard', publicFile('stock-dashboard.html'));
+app.get('/sample_items.csv', publicFile('sample_items.csv'));
+app.get('/sample_movements.csv', publicFile('sample_movements.csv'));
 
 // Database Connection Pool
 const pool = mysql.createPool({
@@ -377,6 +412,7 @@ app.post('/api/import/excel-csv', upload.single('file'), async (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT} (accessible across LAN)`);
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on ${HOST}:${PORT} (Basic Auth enabled)`);
 });

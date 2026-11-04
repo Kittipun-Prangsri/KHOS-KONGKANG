@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -1024,10 +1023,8 @@
     </div>
 
     <script>
-        // Supabase Credentials
-        const SUPABASE_URL = 'https://hxejooyqjjrdycxzgdkp.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh4ZWpvb3lxampyZHljeHpnZGtwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzU3NjczOSwiZXhwIjoyMDk5MTUyNzM5fQ.pgMSF9y2-t5n6lH7hql8B7QzSj76Eqv3qEqMJZSS42k';
-        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+        // ข้อมูลทั้งหมดดึงผ่าน Express API (/api/*) เท่านั้น — ห้ามฝัง key ของ Supabase ในหน้าเว็บ
+        const supabaseClient = null;
 
         let currentActiveView = 'current';
 

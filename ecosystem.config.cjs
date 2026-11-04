@@ -19,8 +19,10 @@ module.exports = {
         DB_PASSWORD: process.env.DB_PASSWORD || '',
         DB_NAME: process.env.DB_NAME || 'computer_stock',
         DB_PORT: process.env.DB_PORT || 3306,
-        SUPABASE_URL: process.env.SUPABASE_URL || '',
-        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+        AUTH_USER: process.env.AUTH_USER || '',
+        AUTH_PASSWORD: process.env.AUTH_PASSWORD || '',
+        HOST: process.env.HOST || '0.0.0.0',
+        CORS_ORIGINS: process.env.CORS_ORIGINS || ''
       },
       env_production: {
         NODE_ENV: 'production',

@@ -26,13 +26,16 @@ BEGIN
             (fy.start_date > start_fy.start_date) OR 
             (fy.start_date = start_fy.start_date AND fm.month_no >= start_fm.month_no)
         )
-        AND EXISTS (
+        AND (
+            fm.id = p_start_fiscal_month_id  -- เดือนที่แก้ไขต้องคำนวณเสมอ แม้ยังไม่มีแถวสรุป
+            OR EXISTS (
             SELECT 1 FROM monthly_stock_summary mss 
             WHERE mss.item_id = p_item_id AND mss.fiscal_month_id = fm.id
+            )
         )
         ORDER BY fy.start_date ASC, fm.month_no ASC
     LOOP
-        -- ดึง closing เดือนก่อนหน้า
+        -- ดึง closing เดือนก่อนหน้า (SELECT INTO ที่ไม่พบแถวจะตั้งตัวแปรเป็น NULL จึงต้องรีเซ็ตเป็น 0 เอง)
         SELECT COALESCE(mss.closing_qty, 0), COALESCE(mss.closing_value, 0.00)
         INTO v_prev_closing_qty, v_prev_closing_val
         FROM fiscal_months prev_fm
@@ -46,6 +49,11 @@ BEGIN
         )
         ORDER BY prev_fy.start_date DESC, prev_fm.month_no DESC
         LIMIT 1;
+
+        IF NOT FOUND THEN
+            v_prev_closing_qty := 0;
+            v_prev_closing_val := 0.00;
+        END IF;
 
         -- SUM รับ
         SELECT COALESCE(SUM(quantity), 0), COALESCE(SUM(total_value), 0.00)
