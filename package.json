@@ -22,7 +22,8 @@
     "user:add": "node scripts/add_app_user.js",
     "check:db": "node scripts/check_connection.js",
     "check:login": "node scripts/check_login.js",
-    "check:hash": "node scripts/check_hash_format.js"
+    "check:hash": "node scripts/check_hash_format.js",
+    "fix:excel-receipts": "node scripts/import_missing_excel_receipts.js"
   },
   "keywords": [
     "inventory",
