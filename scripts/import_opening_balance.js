@@ -23,6 +23,7 @@ const db = await mysql.createConnection({
   database: process.env.DB_NAME, port: Number(process.env.DB_PORT) || 3306,
   charset: 'utf8mb4',  // บังคับชุดอักขระ กันชื่อวัสดุภาษาไทยเพี้ยนตอนเขียน
 });
+await db.query("SET NAMES utf8mb4");  // บังคับซ้ำให้แน่นอน (option charset ด้านบนอาจไม่พอ)
 
 const [[fm]] = await db.query('SELECT id FROM fiscal_months WHERE ? BETWEEN start_date AND end_date LIMIT 1', [OPENING_DATE]);
 if (!fm) { console.error('❌ ไม่พบเดือนงบ ต.ค. 2025 — รัน db/seed_data.sql (ปีงบ 2569) ก่อน'); process.exit(1); }

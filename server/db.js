@@ -14,3 +14,6 @@ export const pool = mysql.createPool({
   dateStrings: true,   // DATE/DATETIME เป็นสตริง ไม่เพี้ยนเพราะ timezone
   charset: 'utf8mb4',  // บังคับชุดอักขระ กันข้อความไทยเพี้ยนตอนเขียน/อ่าน
 });
+// กันพลาด: option charset ด้านบนอาจไม่ถูกตีความตามที่ต้องการในบางเวอร์ชันของไดรเวอร์
+// บังคับซ้ำด้วย SET NAMES ทุกครั้งที่เปิด connection ใหม่ในพูล (ทางที่แน่นอนที่สุด)
+pool.pool.on('connection', (c) => c.query("SET NAMES utf8mb4"));
