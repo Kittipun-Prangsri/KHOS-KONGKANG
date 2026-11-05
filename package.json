@@ -2,11 +2,11 @@
   "name": "khlonghat-computer-material-stock",
   "version": "1.0.0",
   "description": "ระบบบัญชีรับ-จ่ายวัสดุคอมพิวเตอร์ โรงพยาบาลคลองหาด",
-  "main": "backend-api/server.js",
+  "main": "server/index.js",
   "type": "module",
   "scripts": {
-    "start": "node backend-api/server.js",
-    "dev": "node --watch backend-api/server.js",
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
     "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:prod": "pm2 start ecosystem.config.cjs --env production",
     "pm2:stop": "pm2 stop ecosystem.config.cjs",
@@ -14,7 +14,15 @@
     "pm2:logs": "pm2 logs KONGKANG-stock-api",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "setup:supabase": "node scripts/setup_supabase.js"
+    "setup:supabase": "node scripts/setup_supabase.js",
+    "css:build": "tailwindcss -i client/app.css -o public/assets/app.css --minify",
+    "css:watch": "tailwindcss -i client/app.css -o public/assets/app.css --watch",
+    "assets:fonts": "mkdir -p public/assets/fonts && cp node_modules/@fontsource/prompt/files/prompt-{thai,latin}-{400,500,600,700}-normal.woff2 public/assets/fonts/",
+    "build": "npm run assets:fonts && npm run css:build",
+    "user:add": "node scripts/add_app_user.js",
+    "check:db": "node scripts/check_connection.js",
+    "check:login": "node scripts/check_login.js",
+    "check:hash": "node scripts/check_hash_format.js"
   },
   "keywords": [
     "inventory",
@@ -30,6 +38,7 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.43.5",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -38,5 +47,10 @@
     "mysql2": "^3.10.1",
     "pg": "^8.12.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@fontsource/prompt": "^5.3.0",
+    "@tailwindcss/cli": "^4.3.4",
+    "tailwindcss": "^4.3.4"
   }
 }

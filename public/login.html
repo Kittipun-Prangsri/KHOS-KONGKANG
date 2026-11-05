@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>เข้าสู่ระบบ — คลังวัสดุ รพ.คลองหาด</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="/js/theme.js"></script>
+</head>
+<body class="min-h-screen">
+  <main class="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
+
+    <!-- ฝั่งซ้าย: แบรนด์ -->
+    <section class="relative hidden overflow-hidden bg-slate-950 lg:block">
+      <div class="absolute -top-24 -left-24 size-[34rem] animate-float rounded-full bg-teal-500/40 blur-[110px]"></div>
+      <div class="absolute right-0 bottom-0 size-[30rem] animate-float rounded-full bg-indigo-500/35 blur-[110px] [animation-delay:-6s]"></div>
+      <div class="absolute top-1/3 left-1/3 size-72 animate-float rounded-full bg-emerald-400/25 blur-[90px] [animation-delay:-3s]"></div>
+      <div class="absolute inset-0 opacity-[.07] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:44px_44px]"></div>
+
+      <div class="relative flex h-full flex-col justify-between p-12 text-white">
+        <div class="flex items-center gap-3">
+          <div class="grid size-11 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
+            <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+          </div>
+          <div class="leading-tight">
+            <p class="font-semibold">คลังวัสดุคอมพิวเตอร์</p>
+            <p class="text-xs text-white/60">โรงพยาบาลคลองหาด · หน่วยเทคโนโลยีสารสนเทศ</p>
+          </div>
+        </div>
+
+        <div class="max-w-lg animate-rise">
+          <h1 class="text-4xl leading-tight font-bold tracking-tight xl:text-5xl">
+            รู้ยอดวัสดุ<span class="bg-gradient-to-r from-teal-300 to-emerald-200 bg-clip-text text-transparent">ทุกชิ้น</span><br>แบบเรียลไทม์
+          </h1>
+          <p class="mt-5 text-lg text-white/70">ดึงข้อมูลรับ-จ่ายจาก Hosoffice อัตโนมัติ ไม่ต้องกรอก Excel ยกยอดให้เองทุกเดือน ตรวจสอบย้อนหลังได้ทุกรายการ</p>
+          <ul class="mt-8 grid gap-3 text-sm text-white/80">
+            <li class="flex items-center gap-3"><span class="grid size-6 place-items-center rounded-full bg-emerald-400/20 text-emerald-300">✓</span> ซิงก์ใบรับ-ใบเบิกจาก Hosoffice</li>
+            <li class="flex items-center gap-3"><span class="grid size-6 place-items-center rounded-full bg-emerald-400/20 text-emerald-300">✓</span> ยกยอดข้ามเดือน/ข้ามปีงบประมาณอัตโนมัติ</li>
+            <li class="flex items-center gap-3"><span class="grid size-6 place-items-center rounded-full bg-emerald-400/20 text-emerald-300">✓</span> เตือนเมื่อวัสดุใกล้หมด · บันทึกประวัติการใช้งานทุกครั้ง</li>
+          </ul>
+        </div>
+
+        <p class="text-xs text-white/50">พัฒนาโดย Kittipun Prangsri</p>
+      </div>
+    </section>
+
+    <!-- ฝั่งขวา: ฟอร์ม -->
+    <section class="relative flex flex-col items-center justify-center px-6 py-10">
+      <div class="absolute inset-0 -z-10 bg-[radial-gradient(60rem_30rem_at_80%_-10%,oklch(0.9_0.08_185/.45),transparent)] dark:bg-[radial-gradient(60rem_30rem_at_80%_-10%,oklch(0.4_0.1_185/.35),transparent)]"></div>
+
+      <div class="absolute top-5 right-5"><button id="themeBtn" type="button" class="btn btn-soft !px-3" aria-label="สลับโหมดมืด/สว่าง"><span data-theme-icon>◐</span></button></div>
+
+      <div class="card w-full max-w-md animate-rise p-8 sm:p-10">
+        <div class="mb-8 lg:hidden">
+          <p class="font-semibold">คลังวัสดุคอมพิวเตอร์</p>
+          <p class="text-xs text-slate-500">โรงพยาบาลคลองหาด</p>
+        </div>
+        <h2 class="text-2xl font-bold tracking-tight">เข้าสู่ระบบ</h2>
+        <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">ใช้ชื่อผู้ใช้และรหัสผ่านเดียวกับระบบบุคลากร (Hosoffice)</p>
+
+        <form id="loginForm" class="mt-8 grid gap-5" novalidate>
+          <div>
+            <label class="label" for="username">ชื่อผู้ใช้</label>
+            <input id="username" name="username" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+          </div>
+          <div>
+            <label class="label" for="password">รหัสผ่าน</label>
+            <div class="relative">
+              <input id="password" name="password" type="password" class="input pr-12" autocomplete="current-password" required>
+              <button id="togglePw" type="button" class="absolute inset-y-0 right-0 px-3.5 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" aria-label="แสดงหรือซ่อนรหัสผ่าน">แสดง</button>
+            </div>
+          </div>
+
+          <p id="error" role="alert" class="hidden rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-300"></p>
+
+          <button id="submitBtn" class="btn btn-primary h-12 w-full text-base" type="submit">เข้าสู่ระบบ</button>
+        </form>
+
+        <p class="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">ไม่สามารถเข้าได้? ติดต่อผู้ดูแลระบบเพื่อขอสิทธิ์ใช้งาน<br>หน่วยเทคโนโลยีสารสนเทศ</p>
+      </div>
+
+      <footer class="mt-8 text-center text-xs text-slate-500 dark:text-slate-400">
+        พัฒนาโดย <span class="font-medium text-slate-700 dark:text-slate-200">Kittipun Prangsri</span> · © 2569
+      </footer>
+    </section>
+  </main>
+  <script type="module" src="/js/login.js"></script>
+</body>
+</html>

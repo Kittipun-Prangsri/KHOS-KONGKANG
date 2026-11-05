@@ -24,4 +24,4 @@ CREATE TABLE IF NOT EXISTS sync_runs (
     updated_count INT NOT NULL DEFAULT 0,
     deleted_count INT NOT NULL DEFAULT 0,
     message TEXT NULL
-);
+) ENGINE=InnoDB;

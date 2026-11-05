@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS item_categories (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
 -- 2. รายการวัสดุ Master (items)
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES item_categories(id) ON DELETE SET NULL
-);
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
 -- 3. ปีงบประมาณ (fiscal_years)
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS fiscal_years (
     end_date DATE NOT NULL,                -- เช่น '2026-09-30'
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
 -- 4. เดือนปีงบประมาณ (fiscal_months)
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS fiscal_months (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (fiscal_year_id) REFERENCES fiscal_years(id) ON DELETE CASCADE,
     UNIQUE KEY uq_fiscal_month (fiscal_year_id, month_no)
-);
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
 -- 5. บันทึกความเคลื่อนไหว รับ-จ่าย (stock_movements)
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS stock_movements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
     FOREIGN KEY (fiscal_month_id) REFERENCES fiscal_months(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
 -- 6. สรุปยอดสต๊อกประจำเดือนต่อรายการ (monthly_stock_summary)
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS monthly_stock_summary (
     FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
     FOREIGN KEY (fiscal_month_id) REFERENCES fiscal_months(id) ON DELETE CASCADE,
     UNIQUE KEY uq_item_month (item_id, fiscal_month_id)
-);
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------------------------------
 -- 7. Views สำหรับ Dashboard

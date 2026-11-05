@@ -10,11 +10,13 @@
 ## ลำดับติดตั้ง
 1. DBA แก้ `<APP_HOST>` / `<รหัสผ่าน>` ใน `provision_app_db.sql` แล้วรันด้วย root (สร้างฐาน + ผู้ใช้ + สิทธิ์)
 2. รันด้วย root ตามลำดับ (เลือกฐาน `computer_stock`):
-   `stock_computer_schema.sql` → `stock_triggers_procedures.sql` → `seed_base.sql` → `001_hosoffice_sync.sql`
+   `stock_computer_schema.sql` → `stock_triggers_procedures.sql` → `seed_base.sql` → `001_hosoffice_sync.sql` → `002_auth.sql` → `003_auth_no_cid.sql`
    (ห้ามใช้ `seed_data.sql` กับฐานจริง — เป็นข้อมูลตัวอย่าง)
 3. `.env`: `DB_*` = เซิร์ฟเวอร์เดิม ฐาน `computer_stock` ผู้ใช้ `stock_app`
    และ `HOSOFFICE_DB_*` = เซิร์ฟเวอร์เดิม ฐาน `hosoffice` ผู้ใช้ `stock_app` เดียวกัน
-4. `node scripts/import_opening_balance.js` (ครั้งเดียว) แล้ว `POST /api/sync/hosoffice?dry=1` ตรวจก่อน sync จริง
+4. DBA รัน `grant_hr_login.sql` (ให้สิทธิ์อ่านเฉพาะ 6 คอลัมน์ล็อกอิน) แล้วตั้ง `HR_*` ใน `.env`
+5. สร้างผู้ดูแลคนแรก: `npm run user:add -- admin` (ถามชื่อผู้ใช้แบบซ่อนตัวอักษร ไม่ค้างใน history)
+6. `node scripts/import_opening_balance.js` (ครั้งเดียว) แล้ว ตรวจ `ตั้งค่า → ซิงก์ Hosoffice → ทดลองซิงก์` ก่อน sync จริง
 
 ## ชั้นป้องกัน
 - **สิทธิ์ในฐานข้อมูล (เชื่อถือได้ที่สุด):** `stock_app` มี SELECT บน hosoffice เฉพาะ 3 ตาราง ไม่มีสิทธิ์เขียน

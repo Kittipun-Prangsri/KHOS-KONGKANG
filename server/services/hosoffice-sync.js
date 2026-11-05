@@ -17,7 +17,7 @@ let running = false;
 
 export const isConfigured = () => Boolean(process.env.HOSOFFICE_DB_HOST && process.env.HOSOFFICE_DB_USER);
 
-function getHosPool() {
+export function getHosPool() {
   if (!hosPool) {
     hosPool = mysql.createPool({
       host: process.env.HOSOFFICE_DB_HOST,
@@ -28,6 +28,7 @@ function getHosPool() {
       connectionLimit: 2,
       dateStrings: true,        // คืนค่า DATE เป็นสตริง YYYY-MM-DD ไม่ให้เพี้ยนเพราะ timezone
       decimalNumbers: true,
+      charset: 'utf8mb4',        // บังคับชุดอักขระ กันชื่อวัสดุภาษาไทยเพี้ยนตอนอ่านจาก Hosoffice
     });
     // กันพลาด: ทุก connection ไป Hosoffice เป็นแบบอ่านอย่างเดียว
     hosPool.pool.on('connection', (c) => c.query('SET SESSION TRANSACTION READ ONLY'));

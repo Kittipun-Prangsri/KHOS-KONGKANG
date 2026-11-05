@@ -7,7 +7,7 @@ import XLSX from 'xlsx';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import { fileURLToPath } from 'url';
-import { guardAppDbOrExit } from '../backend-api/db-guard.js';
+import { guardAppDbOrExit } from '../server/services/db-guard.js';
 
 dotenv.config();
 guardAppDbOrExit();
@@ -21,6 +21,7 @@ const rows = XLSX.utils.sheet_to_json(wb.Sheets['10'], { header: 1 });
 const db = await mysql.createConnection({
   host: process.env.DB_HOST, user: process.env.DB_USER, password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME, port: Number(process.env.DB_PORT) || 3306,
+  charset: 'utf8mb4',  // บังคับชุดอักขระ กันชื่อวัสดุภาษาไทยเพี้ยนตอนเขียน
 });
 
 const [[fm]] = await db.query('SELECT id FROM fiscal_months WHERE ? BETWEEN start_date AND end_date LIMIT 1', [OPENING_DATE]);

@@ -19,6 +19,8 @@ services:
       - ./db/stock_triggers_procedures.sql:/docker-entrypoint-initdb.d/2_triggers.sql
       - ./db/seed_base.sql:/docker-entrypoint-initdb.d/3_seed_base.sql
       - ./db/001_hosoffice_sync.sql:/docker-entrypoint-initdb.d/4_sync.sql
+      - ./db/002_auth.sql:/docker-entrypoint-initdb.d/5_auth.sql
+      - ./db/003_auth_no_cid.sql:/docker-entrypoint-initdb.d/6_auth_no_cid.sql
     command: --log-bin-trust-function-creators=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -41,8 +43,17 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:?ต้องตั้ง DB_PASSWORD}
       DB_NAME: computer_stock
       DB_PORT: 3306
-      AUTH_USER: ${AUTH_USER:?ต้องตั้ง AUTH_USER}
-      AUTH_PASSWORD: ${AUTH_PASSWORD:?ต้องตั้ง AUTH_PASSWORD}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+      SESSION_HOURS: ${SESSION_HOURS:-8}
+      APP_SECRET: ${APP_SECRET:-}
+      HR_TABLE: ${HR_TABLE:-}
+      HR_ID_COL: ${HR_ID_COL:-}
+      HR_USER_COL: ${HR_USER_COL:-}
+      HR_PASS_COL: ${HR_PASS_COL:-}
+      HR_PASS_ALGO: ${HR_PASS_ALGO:-}
+      HR_NAME_COLS: ${HR_NAME_COLS:-}
+      HR_ACTIVE_COL: ${HR_ACTIVE_COL:-}
+      HR_ACTIVE_VALUE: ${HR_ACTIVE_VALUE:-1}
       # Hosoffice (อ่านอย่างเดียว) — สิทธิ์ตาม db/provision_app_db.sql
       HOSOFFICE_DB_HOST: ${HOSOFFICE_DB_HOST:-}
       HOSOFFICE_DB_PORT: ${HOSOFFICE_DB_PORT:-3306}
