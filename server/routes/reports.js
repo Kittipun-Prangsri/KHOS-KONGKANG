@@ -55,6 +55,46 @@ router.get('/dashboard', [query('fiscal_month_id').optional().isInt({ min: 1 }).
   } catch (e) { fail(res, e, 'dashboard'); }
 });
 
+// สรุปมูลค่าคงคลังรายเดือนทั้งปีในตารางเดียว (ยกมา/รับ/จ่าย/คงเหลือ) — รวมทุกรายการ
+// หมายเหตุสำคัญ: วัสดุที่ไม่มีการเคลื่อนไหวในเดือนใด ๆ จะไม่มีแถวใน monthly_stock_summary ของเดือนนั้นเลย
+// (ตามการออกแบบ trigger ที่คำนวณเฉพาะเดือนที่ "ถูกแตะ") ถ้ารวมยอดแบบ SUM ตรง ๆ ต่อเดือน มูลค่าของวัสดุเหล่านั้น
+// จะหายไปจากผลรวม จึงต้องหา "แถวล่าสุดของแต่ละวัสดุ ณ ก่อน/ถึงเดือนนั้น" มารวมแทน (เหมือนตรรกะเดียวกับที่ trigger
+// ใช้ยกยอดรายตัว แต่ทำระดับรวมทุกรายการสำหรับรายงานนี้โดยเฉพาะ)
+router.get('/summary/monthly-value/:fiscalYearId', [param('fiscalYearId').isInt().toInt()], validate, async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      WITH target AS (
+        SELECT fm.id, fm.month_no, fm.month_name, fm.calendar_month, fm.calendar_year_ad + 543 AS year_th, fy.start_date AS fy_start
+        FROM fiscal_months fm JOIN fiscal_years fy ON fy.id = fm.fiscal_year_id
+        WHERE fm.fiscal_year_id = ?
+      ),
+      hist AS (
+        SELECT s.item_id, s.closing_value, fy.start_date AS fy_start, fm.month_no
+        FROM monthly_stock_summary s
+        JOIN fiscal_months fm ON fm.id = s.fiscal_month_id
+        JOIN fiscal_years fy ON fy.id = fm.fiscal_year_id
+      ),
+      opening_calc AS (
+        SELECT t.id AS fiscal_month_id, h.closing_value,
+               ROW_NUMBER() OVER (PARTITION BY t.id, h.item_id ORDER BY h.fy_start DESC, h.month_no DESC) rn
+        FROM target t JOIN hist h ON (h.fy_start < t.fy_start) OR (h.fy_start = t.fy_start AND h.month_no < t.month_no)
+      ),
+      closing_calc AS (
+        SELECT t.id AS fiscal_month_id, h.closing_value,
+               ROW_NUMBER() OVER (PARTITION BY t.id, h.item_id ORDER BY h.fy_start DESC, h.month_no DESC) rn
+        FROM target t JOIN hist h ON (h.fy_start < t.fy_start) OR (h.fy_start = t.fy_start AND h.month_no <= t.month_no)
+      )
+      SELECT t.id AS fiscal_month_id, t.month_no, t.month_name, t.calendar_month, t.year_th,
+        COALESCE((SELECT SUM(closing_value) FROM opening_calc WHERE fiscal_month_id = t.id AND rn = 1), 0) AS opening_value,
+        COALESCE((SELECT SUM(s.received_value) FROM monthly_stock_summary s WHERE s.fiscal_month_id = t.id), 0) AS received_value,
+        COALESCE((SELECT SUM(s.issued_value) FROM monthly_stock_summary s WHERE s.fiscal_month_id = t.id), 0) AS issued_value,
+        COALESCE((SELECT SUM(closing_value) FROM closing_calc WHERE fiscal_month_id = t.id AND rn = 1), 0) AS closing_value
+      FROM target t
+      ORDER BY t.month_no`, [req.params.fiscalYearId]);
+    res.json({ success: true, data: rows });
+  } catch (e) { fail(res, e, 'monthly value summary'); }
+});
+
 router.get('/summary/annual/:fiscalYearId', [param('fiscalYearId').isInt().toInt()], validate, async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM v_annual_summary WHERE fiscal_year_id = ? ORDER BY item_code ASC', [req.params.fiscalYearId]);

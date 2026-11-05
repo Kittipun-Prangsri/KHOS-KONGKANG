@@ -54,8 +54,15 @@
   .num { font-variant-numeric: tabular-nums; }
 }
 
+.print-only { display: none; }
 @media print {
   .no-print { display: none !important; }
+  .print-only { display: block !important; }
   body { background: #fff !important; color: #000 !important; }
   .card { box-shadow: none !important; border-color: #ccc !important; background: #fff !important; }
+  table, th, td { border: 1px solid #999 !important; border-collapse: collapse; }
+  th, td { padding: 4px 8px !important; }
+  table { min-width: 0 !important; width: auto !important; margin: 0 auto; }   /* ยกเลิก min-w-[...] ที่บังคับกว้างไว้สำหรับจอ กันล้นหน้ากระดาษแนวตั้ง */
+  .overflow-x-auto { overflow: visible !important; }
+  @page { size: A4 portrait; margin: 14mm; }
 }

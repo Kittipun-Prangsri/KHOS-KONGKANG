@@ -28,8 +28,10 @@
       <div class="mt-auto grid gap-2">
         <button id="cmdBtn" class="btn btn-soft w-full justify-between !px-3 text-slate-500" type="button"><span>ค้นหาวัสดุ…</span><kbd class="rounded-md bg-slate-900/10 px-1.5 text-[11px] dark:bg-white/10">⌘K</kbd></button>
         <div class="card flex items-center gap-3 p-3">
-          <div id="meAvatar" class="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-400 to-teal-400 text-sm font-semibold text-white"></div>
-          <div class="min-w-0 flex-1 leading-tight"><p id="meName" class="truncate text-sm font-medium"></p><p id="meRole" class="text-xs text-slate-500 dark:text-slate-400"></p></div>
+          <button id="meProfileBtn" class="flex min-w-0 flex-1 items-center gap-3 text-left" type="button" title="ตั้งชื่อ-ตำแหน่งสำหรับเซ็นเอกสาร">
+            <span id="meAvatar" class="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-400 to-teal-400 text-sm font-semibold text-white"></span>
+            <span class="min-w-0 flex-1 leading-tight"><span id="meName" class="block truncate text-sm font-medium"></span><span id="meRole" class="block text-xs text-slate-500 dark:text-slate-400"></span></span>
+          </button>
           <button id="logoutBtn" class="btn btn-soft !p-2" type="button" title="ออกจากระบบ" aria-label="ออกจากระบบ">⎋</button>
         </div>
       </div>

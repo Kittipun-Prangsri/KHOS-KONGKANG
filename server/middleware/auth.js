@@ -39,7 +39,7 @@ export async function loadSession(req, _res, next) {
     const token = parseCookies(req.headers.cookie)[COOKIE];
     if (token && /^[a-f0-9]{64}$/.test(token)) {
       const [rows] = await pool.query(
-        `SELECT u.id, u.hr_person_id, u.display_name, u.role
+        `SELECT u.id, u.hr_person_id, u.display_name, u.role, u.signature_name, u.position_title
            FROM app_sessions s JOIN app_users u ON u.id = s.user_id
           WHERE s.token_hash = ? AND s.expires_at > NOW() AND u.is_active = 1`, [hashToken(token)]);
       if (rows[0]) { req.user = rows[0]; req.sessionTokenHash = hashToken(token); }

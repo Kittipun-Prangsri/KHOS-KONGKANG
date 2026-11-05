@@ -98,6 +98,25 @@ async function logout() {
   try { await api.post('/api/auth/logout'); } finally { location.replace('/login'); }
 }
 
+// ชื่อ-ตำแหน่งสำหรับเซ็นเอกสารที่พิมพ์ (ของตัวเองเท่านั้น ไม่เกี่ยวกับสิทธิ์ใช้งาน)
+function openProfileModal() {
+  const m = modal(`
+    <div class="mb-5 flex items-center justify-between"><h2 class="text-xl font-bold">ข้อมูลสำหรับเซ็นเอกสาร</h2><button data-close class="btn btn-soft !p-2" aria-label="ปิด">✕</button></div>
+    <p class="mb-4 text-sm text-slate-500">ใช้แสดงท้ายรายงานที่พิมพ์ (เช่น "นายกิตติพันธ์ ปรางศรี" และตำแหน่งงาน) ไม่กระทบชื่อหรือสิทธิ์ใช้งานระบบ</p>
+    <form id="pf" class="grid gap-4" novalidate>
+      <div><label class="label" for="pfName">ชื่อ-นามสกุล สำหรับเซ็น</label><input id="pfName" class="input" maxlength="150" placeholder="เช่น นายกิตติพันธ์ ปรางศรี" value="${esc(ctx.me.signature_name || ctx.me.name)}"></div>
+      <div><label class="label" for="pfPos">ตำแหน่ง</label><input id="pfPos" class="input" maxlength="150" placeholder="เช่น นักวิชาการคอมพิวเตอร์" value="${esc(ctx.me.position_title || '')}"></div>
+      <div class="flex justify-end gap-2 pt-1"><button data-close class="btn btn-soft" type="button">ยกเลิก</button><button class="btn btn-primary" type="submit">บันทึก</button></div>
+    </form>`);
+  $('#pf', m.el).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await api.patch('/api/auth/me', { signature_name: $('#pfName', m.el).value.trim(), position_title: $('#pfPos', m.el).value.trim() });
+    ctx.me.signature_name = $('#pfName', m.el).value.trim();
+    ctx.me.position_title = $('#pfPos', m.el).value.trim();
+    m.close(); toast('บันทึกแล้ว');
+  });
+}
+
 async function boot() {
   try {
     const [me, meta] = await Promise.all([api.get('/api/auth/me'), api.get('/api/meta/fiscal-months')]);
@@ -112,6 +131,7 @@ async function boot() {
 
   $('#logoutBtn').addEventListener('click', logout);
   $('#logoutBtnTop').addEventListener('click', logout);
+  $('#meProfileBtn').addEventListener('click', openProfileModal);
   $('#cmdBtn').addEventListener('click', openSearch);
   $('#cmdBtnTop').addEventListener('click', openSearch);
   document.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openSearch(); } });

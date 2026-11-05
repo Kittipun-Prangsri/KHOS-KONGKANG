@@ -74,7 +74,22 @@ router.post('/logout', async (req, res) => {
 });
 
 router.get('/me', requireAuth, (req, res) => {
-  res.json({ success: true, data: { id: req.user.id, name: req.user.display_name, role: req.user.role } });
+  res.json({ success: true, data: {
+    id: req.user.id, name: req.user.display_name, role: req.user.role,
+    signature_name: req.user.signature_name, position_title: req.user.position_title,
+  } });
+});
+
+// ตั้งชื่อ-ตำแหน่งสำหรับเซ็นเอกสารที่พิมพ์ (แก้ของตัวเองเท่านั้น ทุกบทบาททำได้ ไม่ใช่ข้อมูลจาก HR)
+router.patch('/me', requireAuth, [
+  body('signature_name').optional({ values: 'falsy' }).isString().trim().isLength({ max: 150 }),
+  body('position_title').optional({ values: 'falsy' }).isString().trim().isLength({ max: 150 }),
+], validate, async (req, res) => {
+  try {
+    await pool.query('UPDATE app_users SET signature_name = ?, position_title = ? WHERE id = ?',
+      [req.body.signature_name || null, req.body.position_title || null, req.user.id]);
+    res.json({ success: true, message: 'บันทึกแล้ว' });
+  } catch (e) { fail(res, e, 'update me'); }
 });
 
 export default router;
